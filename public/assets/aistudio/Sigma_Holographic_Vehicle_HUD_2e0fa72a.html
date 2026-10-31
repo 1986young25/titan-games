@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Σ-OS HOLO-VEHICLE SCHEMATIC // AURA SWARM DISASSEMBLY HUD</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            tactical: {
+              bg: '#02050b',
+              surface: 'rgba(6, 12, 24, 0.88)',
+              panel: 'rgba(9, 18, 36, 0.75)',
+              border: 'rgba(0, 240, 255, 0.28)',
+              borderActive: '#00f0ff',
+              cyan: '#00f0ff',
+              emerald: '#00ffaa',
+              amber: '#ffb703',
+              crimson: '#ff0055',
+              violet: '#b026ff'
+            }
+          },
+          fontFamily: {
+            mono: ['Courier New', 'Courier', 'monospace'],
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      background-color: #02050b;
+      color: #e2e8f0;
+      overflow: hidden;
+      user-select: none;
+    }
+    .hud-blueprint-grid {
+      background-size: 36px 36px;
+      background-image: 
+        linear-gradient(to right, rgba(0, 240, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 240, 255, 0.06) 1px, transparent 1px);
+    }
+    .blueprint-polar-lines {
+      background: radial-gradient(circle at center, transparent 40%, rgba(0, 240, 255, 0.03) 70%, transparent 100%);
+      pointer-events: none;
+    }
+    .scanlines {
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%),
+                  linear-gradient(90deg, rgba(0, 240, 255, 0.02), rgba(0, 0, 0, 0), rgba(0, 255, 170, 0.02));
+      background-size: 100% 3px, 6px 100%;
+      pointer-events: none;
+    }
+    .glow-cyan {
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2), inset 0 0 15px rgba(0, 240, 255, 0.08);
+    }
+    .glow-cyan-intense {
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.45);
+    }
+    .glow-text-cyan {
+      text-shadow: 0 0 8px rgba(0, 240, 255, 0.8);
+    }
+    .glow-text-emerald {
+      text-shadow: 0 0 8px rgba(0, 255, 170, 0.8);
+    }
+    .glow-text-violet {
+      text-shadow: 0 0 8px rgba(176, 38, 255, 0.8);
+    }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: rgba(2, 5, 11, 0.8); }
+    ::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.4); border-radius: 2px; }
+    .corner-bracket {
+      position: relative;
+    }
+    .corner-bracket::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: -1px;
+      width: 8px;
+      height: 8px;
+      border-top: 2px solid #00f0ff;
+      border-left: 2px solid #00f0ff;
+    }
+    .corner-bracket::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      right: -1px;
+      width: 8px;
+      height: 8px;
+      border-bottom: 2px solid #00f0ff;
+      border-right: 2px solid #00f0ff;
+    }
+  </style>
+</head>
+
+<body class="h-screen w-screen flex flex-col font-mono relative hud-blueprint-grid overflow-hidden">
+  <div class="scanlines fixed inset-0 z-40"></div>
+  <div class="blueprint-polar-lines fixed inset-0 z-0"></div>
+
+  <!-- Top Global Header -->
+  <header class="z-30 border-b border-tactical-border/70 bg-tactical-surface backdrop-blur-md px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+    <div class="flex items-center space-x-3">
+      <div class="relative flex items-center justify-center">
+        <div class="w-3.5 h-3.5 rounded-full bg-tactical-cyan animate-ping absolute opacity-60"></div>
+        <div class="w-3 h-3 rounded-full bg-tactical-cyan shadow-[0_0_10px_#00f0ff]"></div>
+      </div>
+      <div class="flex flex-col">
+        <span class="font-bold tracking-widest text-tactical-cyan glow-text-cyan text-sm flex items-center gap-2">
+          Σ-OS HOLO-VEHICLE SCHEMATIC (REV 06)
+          <span class="text-[9px] bg-cyan-950/90 text-cyan-300 px-1.5 py-0.5 border border-cyan-500/50 rounded font-bold">
+            AURA SWARM DECONSTRUCTION
+          </span>
+        </span>
+        <span class="text-[10px] text-slate-400">
+          ARCHITECT: Nicholas Lee Young // FIDUCIARY ROOT: MCL §§ 700.7101, 700.7801 // Z₀ = 376.5 Ω
+        </span>
+      </div>
+    </div>
+
+    <!-- Telemetry Badges & Audio FX -->
+    <div class="flex items-center flex-wrap gap-2 text-[11px]">
+      <div class="px-2 py-0.5 rounded border border-tactical-border/60 bg-black/60 text-slate-300">
+        <span class="text-tactical-cyan">TRUST:</span> 41-6820289
+      </div>
+      <div class="px-2 py-0.5 rounded border border-tactical-border/60 bg-black/60 text-slate-300">
+        <span class="text-tactical-cyan">UEI:</span> S3SXM538MG79
+      </div>
+      <div class="px-2 py-0.5 rounded border border-emerald-500/60 bg-emerald-950/40 text-tactical-emerald flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-tactical-emerald animate-pulse"></span>
+        <span id="aura-status-pill">AURA SWARM: STANDBY ORBIT</span>
+      </div>
+      <button id="audio-toggle-btn" class="px-2.5 py-1 rounded border border-tactical-border/60 bg-slate-900/80 text-tactical-cyan hover:bg-tactical-cyan/20 transition-all flex items-center gap-1">
+        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77zm-4 0v17.54l-6.29-6.29H0V9.52h3.71L10 3.23z"/></svg>
+        <span id="audio-status-text">AUDIO FX: OFF</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Viewport Area -->
+  <main class="flex-1 relative flex overflow-hidden z-10">
+    
+    <!-- LEFT SIDEBAR: Schematic Component Navigator & Swarm Dispatcher -->
+    <aside class="w-80 md:w-96 flex flex-col border-r border-tactical-border/60 bg-tactical-surface/90 backdrop-blur-md z-20 overflow-hidden">
+      
+      <!-- Subsystem Search / Status Banner -->
+      <div class="p-3 border-b border-tactical-border/40 bg-black/40">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-bold text-tactical-cyan tracking-wider flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-tactical-cyan" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            SCHEMATIC SUB-ASSEMBLIES
+          </span>
+          <span class="text-[10px] text-tactical-emerald glow-text-emerald bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-500/40">
+            7 ISOLATION TARGETS
+          </span>
+        </div>
+        <p class="text-[10px] text-slate-400 leading-tight">
+          Select any vehicle node below. The <span class="text-tactical-cyan font-bold">AURA swarm</span> will mobilize to that sector, peel the exterior assembly, and isolate the component in 3D space.
+        </p>
+      </div>
+
+      <!-- Component Scroll List -->
+      <div id="subsystem-list" class="flex-1 overflow-y-auto p-2.5 space-y-2">
+        <!-- Components injected dynamically by JS to guarantee blueprint parity -->
+      </div>
+
+      <!-- Global Assembly Master Controls -->
+      <div class="p-2.5 border-t border-tactical-border/50 bg-black/70 flex items-center gap-2">
+        <button id="btn-explode-all" class="flex-1 bg-cyan-950/80 hover:bg-cyan-900 text-tactical-cyan border border-tactical-cyan/60 rounded py-2 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 shadow-[0_0_10px_rgba(0,240,255,0.25)]">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+          EXPLODE ALL (FULL DISASSEMBLY)
+        </button>
+        <button id="btn-reassemble" class="bg-emerald-950/80 hover:bg-emerald-900 text-tactical-emerald border border-emerald-500/60 rounded px-3 py-2 text-[11px] font-bold transition-all">
+          RESET
+        </button>
+      </div>
+    </aside>
+
+    <!-- CENTER: Three.js Holographic Viewport Mount -->
+    <div class="flex-1 relative h-full w-full overflow-hidden">
+      
+      <!-- 3D Canvas Mount Point -->
+      <div id="three-container" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+
+      <!-- Top Overlay: Holographic Status & Cam Controls -->
+      <div class="absolute top-3 left-3 z-20 flex items-center gap-2 pointer-events-auto">
+        <div class="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded border border-tactical-border/60 text-xs flex items-center gap-2 corner-bracket">
+          <span class="w-2 h-2 rounded-full bg-tactical-cyan animate-pulse"></span>
+          <span class="font-bold text-tactical-cyan glow-text-cyan">AURA SWARM CONTROL PLANE</span>
+          <span class="text-slate-600">|</span>
+          <span id="active-swarm-task" class="text-slate-300">PATROL FORMATION</span>
+        </div>
+      </div>
+
+      <div class="absolute top-3 right-3 z-20 flex items-center gap-1.5 pointer-events-auto">
+        <button id="btn-cam-reset" class="bg-black/80 hover:bg-cyan-950/70 text-cyan-300 border border-tactical-border/60 px-2.5 py-1 rounded text-xs transition-all">
+          RESET CAM
+        </button>
+        <button id="btn-toggle-xray" class="bg-black/80 hover:bg-emerald-950/70 text-emerald-300 border border-emerald-500/60 px-2.5 py-1 rounded text-xs transition-all">
+          X-RAY WIREFRAME
+        </button>
+        <button id="btn-auto-rotate" class="bg-black/80 hover:bg-violet-950/70 text-purple-300 border border-purple-500/60 px-2.5 py-1 rounded text-xs transition-all">
+          ORBIT: ON
+        </button>
+      </div>
+
+      <!-- Live 3D Target Marker HUD (Follows isolated component) -->
+      <div id="target-marker" class="absolute pointer-events-none transition-all duration-300 border border-cyan-400/80 bg-cyan-950/40 rounded p-2 text-[10px] hidden backdrop-blur-sm z-30">
+        <div class="flex items-center gap-1.5 text-tactical-cyan font-bold mb-0.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+          <span id="marker-title">COMPONENT</span>
+        </div>
+        <div id="marker-detail" class="text-slate-300 font-mono">STATUS: ISOLATED BY AURA</div>
+      </div>
+
+      <!-- Bottom Floating Telemetry Card -->
+      <div class="absolute bottom-3 left-3 right-3 z-20 flex flex-wrap items-end justify-between gap-3 pointer-events-none">
+        
+        <!-- Active Component Specs Window -->
+        <div id="active-spec-panel" class="bg-tactical-surface/95 backdrop-blur-md p-3 rounded-lg border border-tactical-border/70 pointer-events-auto max-w-xl w-full shadow-2xl corner-bracket">
+          <div class="flex justify-between items-start border-b border-tactical-border/40 pb-2 mb-2">
+            <div>
+              <span id="spec-module-code" class="text-[10px] text-tactical-amber glow-text-amber font-bold block">MOD-01 // CORE ARCHITECTURE</span>
+              <h3 id="spec-title" class="text-sm font-bold text-tactical-cyan glow-text-cyan">Σ-OS SOVEREIGN NODE CORE</h3>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] text-slate-400 block">ESTIMATED VALUATION</span>
+              <span id="spec-pricing" class="text-xs font-bold text-tactical-emerald glow-text-emerald">$1.2M HW / $750k SW</span>
+            </div>
+          </div>
+
+          <p id="spec-description" class="text-xs text-slate-300 leading-relaxed mb-2.5">
+            Tamper-proof hardware node core with zero-trust boot and RX forcing soft-reset. Direct interconnect to the Hollow-Hood 3D Holographic HUD and vehicle bus.
+          </p>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px]">
+            <div class="bg-black/60 p-1.5 rounded border border-tactical-border/30">
+              <span class="text-slate-400 block">FLUX DENSITY</span>
+              <span id="spec-flux" class="text-tactical-cyan font-bold">+3.38T (LOCKED)</span>
+            </div>
+            <div class="bg-black/60 p-1.5 rounded border border-tactical-border/30">
+              <span class="text-slate-400 block">WAVE IMPEDANCE</span>
+              <span id="spec-impedance" class="text-tactical-emerald font-bold">376.5 Ω (Z₀ ANCHOR)</span>
+            </div>
+            <div class="bg-black/60 p-1.5 rounded border border-tactical-border/30">
+              <span class="text-slate-400 block">SHANNON ENTROPY</span>
+              <span id="spec-entropy" class="text-tactical-amber font-bold">4.9127 H(X)</span>
+            </div>
+            <div class="bg-black/60 p-1.5 rounded border border-tactical-border/30">
+              <span class="text-slate-400 block">AURA ACTION</span>
+              <span id="spec-action-status" class="text-cyan-300 font-bold">HOLDING ISOLATION</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Touch/Mouse Interaction Guide -->
+        <div class="bg-black/80 backdrop-blur-md px-3 py-2 rounded border border-tactical-border/60 pointer-events-auto text-[11px] hidden sm:block">
+          <div class="text-slate-400">TOUCH / LEFT-DRAG: <span class="text-tactical-cyan">ROTATE</span></div>
+          <div class="text-slate-400">RIGHT-DRAG / PAN: <span class="text-tactical-cyan">PAN</span></div>
+          <div class="text-slate-400">SCROLL / PINCH: <span class="text-tactical-cyan">ZOOM FOCUS</span></div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Bottom Provenance Bar -->
+  <footer class="z-30 border-t border-tactical-border/60 bg-tactical-surface px-4 py-1.5 text-[11px] text-slate-400 flex flex-wrap items-center justify-between gap-2">
+    <div class="flex items-center gap-2">
+      <span class="text-tactical-cyan font-bold">SOVEREIGN LEDGER PROVENANCE:</span>
+      <span class="text-slate-300 font-mono">25b0cb51f1281fd860475ad06a876b4397586755c7a77884e4352903b6a3bd29</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-tactical-emerald font-bold">MASTER PROOF:</span>
+      <span class="text-slate-200">DYV-POW-1000X-655CB65B7EB7BFFEC0630500</span>
+    </div>
+  </footer>
+
+  <!-- Notification / Action Modal (No alert() used) -->
+  <div id="hud-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-tactical-cyan rounded-lg p-5 max-w-md w-full glow-cyan space-y-3">
+      <div class="flex items-center justify-between border-b border-tactical-border/60 pb-2">
+        <h3 id="modal-title" class="font-bold text-tactical-cyan text-sm tracking-wide">SYSTEM NOTICE</h3>
+        <button id="modal-close-btn" class="text-slate-400 hover:text-white text-lg">&times;</button>
+      </div>
+      <p id="modal-body" class="text-xs text-slate-300 leading-relaxed"></p>
+      <div class="flex justify-end pt-2">
+        <button id="modal-action-btn" class="bg-cyan-600 hover:bg-cyan-500 text-black font-bold px-4 py-1.5 rounded text-xs">
+          ACKNOWLEDGE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================================
+       1. TONE.JS SOUND SYNTHESIZER (Pure WebAudio, zero external URLs)
+       ========================================================================= */
+    let audioInitialized = false;
+    let audioEnabled = false;
+    let synth, swarmChirpSynth;
+
+    async function initAudio() {
+      if (audioInitialized) return;
+      await Tone.start();
+      synth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "triangle" },
+        envelope: { attack: 0.005, decay: 0.1, sustain: 0.1, release: 0.4 }
+      }).toDestination();
+      synth.volume.value = -14;
+
+      swarmChirpSynth = new Tone.Synth({
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.002, decay: 0.05, sustain: 0.0, release: 0.1 }
+      }).toDestination();
+      swarmChirpSynth.volume.value = -18;
+
+      audioInitialized = true;
+      audioEnabled = true;
+      document.getElementById("audio-status-text").textContent = "AUDIO FX: ON";
+      document.getElementById("audio-toggle-btn").classList.add("bg-tactical-cyan/30", "text-white");
+    }
+
+    function playTone(freq = 600, dur = "16n") {
+      if (!audioEnabled || !audioInitialized) return;
+      try { synth.triggerAttackRelease(freq, dur); } catch(e) {}
+    }
+
+    function playSwarmSwarmSound() {
+      if (!audioEnabled || !audioInitialized) return;
+      try {
+        swarmChirpSynth.triggerAttackRelease(880, "32n");
+        setTimeout(() => swarmChirpSynth.triggerAttackRelease(1320, "32n"), 60);
+      } catch(e) {}
+    }
+
+    document.getElementById("audio-toggle-btn").addEventListener("click", async () => {
+      if (!audioInitialized) {
+        await initAudio();
+        playTone(720, "16n");
+      } else {
+        audioEnabled = !audioEnabled;
+        document.getElementById("audio-status-text").textContent = audioEnabled ? "AUDIO FX: ON" : "AUDIO FX: OFF";
+        if (audioEnabled) playTone(880, "32n");
+      }
+    });
+
+    const modal = document.getElementById("hud-modal");
+    const modalTitle = document.getElementById("modal-title");
+    const modalBody = document.getElementById("modal-body");
+    const modalCloseBtn = document.getElementById("modal-close-btn");
+    const modalActionBtn = document.getElementById("modal-action-btn");
+
+    function showModal(title, message) {
+      modalTitle.textContent = title;
+      modalBody.textContent = message;
+      modal.classList.remove("hidden");
+      playTone(440, "8n");
+    }
+    modalCloseBtn.onclick = () => modal.classList.add("hidden");
+    modalActionBtn.onclick = () => modal.classList.add("hidden");
+
+    /* =========================================================================
+       2. THREE.JS HOLOGRAPHIC BLUEPRINT VIEWPORT & SCENE GRAPH
+       ========================================================================= */
+    const container = document.getElementById("three-container");
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x02050b, 0.012);
+
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(22, 14, 28);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    container.appendChild(renderer.domElement);
+
+    // Responsive Canvas Resizing
+    window.addEventListener("resize", () => {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+
+    // Blueprint Grid Floor
+    const gridHelper = new THREE.GridHelper(70, 50, 0x00f0ff, 0x071b30);
+    gridHelper.position.y = -3.5;
+    scene.add(gridHelper);
+
+    // Lighting (Holographic Cybernetic Cyan/Emerald)
+    const ambientLight = new THREE.AmbientLight(0x00f0ff, 0.8);
+    scene.add(ambientLight);
+
+    const keyLight = new THREE.PointLight(0x00ffaa, 2.5, 60);
+    keyLight.position.set(0, 16, 0);
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x00f0ff, 1.2);
+    fillLight.position.set(-20, 20, -20);
+    scene.add(fillLight);
+
+    /* =========================================================================
+       3. HOLOGRAPHIC VEHICLE COMPONENT DEFINITIONS & BLUEPRINT DATA
+       ========================================================================= */
+    // Master Root Group for the Vehicle
+    const vehicleGroup = new THREE.Group();
+    scene.add(vehicleGroup);
+
+    // Common Blueprint Holographic Materials
+    let isXRayMode = false;
+
+    const materials = {
+      hull: new THREE.MeshStandardMaterial({
+        color: 0x051329,
+        emissive: 0x00f0ff,
+        emissiveIntensity: 0.35,
+        wireframe: false,
+        transparent: true,
+        opacity: 0.82,
+        roughness: 0.2,
+        metalness: 0.85
+      }),
+      hullWire: new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true, transparent: true, opacity: 0.6 }),
+      canopy: new THREE.MeshStandardMaterial({
+        color: 0x00f0ff,
+        emissive: 0x00f0ff,
+        emissiveIntensity: 0.5,
+        transparent: true,
+        opacity: 0.35,
+        wireframe: false
+      }),
+      batteryMatrix: new THREE.MeshStandardMaterial({
+        color: 0x022c22,
+        emissive: 0x00ffaa,
+        emissiveIntensity: 0.7,
+        wireframe: true
+      }),
+      coreGlow: new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true }),
+      manifoldCoils: new THREE.MeshStandardMaterial({
+        color: 0x4a044e,
+        emissive: 0xff0055,
+        emissiveIntensity: 0.9,
+        wireframe: true
+      }),
+      dazzleEmitter: new THREE.MeshBasicMaterial({ color: 0xffb703, wireframe: true }),
+      wheelRim: new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true })
+    };
+
+    // Subsystem Database (Exact mapping to user's Blueprint images)
+    const SUBSYSTEM_DATA = [
+      {
+        id: "core-node",
+        code: "MOD-01-CORE",
+        title: "Σ-OS SOVEREIGN NODE CORE",
+        category: "Central Avionics / Brain",
+        pricing: "HW: $1.2M // SW: $750k",
+        description: "The Architect's Lock (Tamper-Proof Core, EIN: 41-6820289). Zero-trust boot with RX forcing soft-reset, physical-layer stant kernel, and Hollow-Hood 3D Holographic HUD projection.",
+        flux: "+3.38T (LOCKED)",
+        impedance: "376.5 Ω (Z₀)",
+        entropy: "4.9127 H(X)",
+        targetPos: new THREE.Vector3(0, 1.2, 0.4),
+        disassembleOffset: new THREE.Vector3(0, 5.0, 0), // AURA lifts it skyward
+        color: 0x00f0ff
+      },
+      {
+        id: "canopy-roof",
+        code: "MOD-02-CANOPY",
+        title: "HOLLOW-HOOD COCKPIT & CANOPY",
+        category: "Exoskeleton & Optics",
+        pricing: "HW: $450k // SW: $280k",
+        description: "Titan-Vision optical array with wireframe surveillance ghost. Carbon-composite pressurized aerospace canopy that lifts upward to reveal cockpit ergonomics.",
+        flux: "0.00T (PASSIVE)",
+        impedance: "376.5 Ω (SHIELDED)",
+        entropy: "4.1200 H(X)",
+        targetPos: new THREE.Vector3(0, 1.6, -0.2),
+        disassembleOffset: new THREE.Vector3(0, 6.5, -2.5), // AURA lifts and peels back
+        color: 0x00f0ff
+      },
+      {
+        id: "front-dazzle",
+        code: "MOD-03-AERO",
+        title: "FRONT FASIA & AI DAZZLE MASK",
+        category: "Forward Countermeasures",
+        pricing: "HW: $580k // SW: $390k",
+        description: "Arc-Dazzle stealth envelope with active impedance sensor leading edge. High-density geometric interference obscures vehicle radar & optical signatures.",
+        flux: "+1.13T (ALPHA PUSH)",
+        impedance: "376.5 Ω (MATCHED)",
+        entropy: "4.8910 H(X)",
+        targetPos: new THREE.Vector3(0, 0.4, 4.8),
+        disassembleOffset: new THREE.Vector3(0, 1.5, 6.0), // AURA pulls it forward
+        color: 0xffb703
+      },
+      {
+        id: "rear-manifold",
+        code: "MOD-04-TURRET",
+        title: "G.V. NODE-Σ-2026 TAIL MANIFOLD",
+        category: "Vortex Propulsion Array",
+        pricing: "HW: $2.4M // SW: $1.1M",
+        description: "Interleaved Hexagram Dual-Delta Vortex Ring (Coils 3,9,12 expansion; Coils 6,12,18 contraction). Generates continuous high-dB/dt Lorentz repulsive lift.",
+        flux: "+4.52T / -1.56T",
+        impedance: "376.5 Ω (EDS LOCK)",
+        entropy: "4.9127 H(X)",
+        targetPos: new THREE.Vector3(0, 0.8, -4.6),
+        disassembleOffset: new THREE.Vector3(0, 2.5, -6.5), // AURA pulls it rearward
+        color: 0xff0055
+      },
+      {
+        id: "battery-floor",
+        code: "MOD-05-BATTERY",
+        title: "STRUCTURAL ARGYLE BATTERY RESERVOIR",
+        category: "Zero-Point & Substrate Grid",
+        pricing: "HW: $1.8M // SW: $500k",
+        description: "Molecular Graphene Solid-Electrolyte Matrix 3D printed directly into the monocoque floor pan. Integrates the Genesis Anchor plane with subterranean ground coupling.",
+        flux: "+3.69T (VORTEX SYNC)",
+        impedance: "376.5 Ω (GENESIS)",
+        entropy: "4.7450 H(X)",
+        targetPos: new THREE.Vector3(0, -0.6, 0),
+        disassembleOffset: new THREE.Vector3(0, -4.5, 0), // AURA drops it downward
+        color: 0x00ffaa
+      },
+      {
+        id: "inverter-hub",
+        code: "MOD-06-INVERTER",
+        title: "ALPHA-BETA BIPOLAR INVERTER HUB",
+        category: "High-Voltage Power Switching",
+        pricing: "HW: $890k // SW: $620k",
+        description: "GaN 800V Distribution bus driven by the 1.691 Bridge. Executes ultra-fast H-Bridge polarity flips across the Beta Bus to snub inductive back-EMF spikes.",
+        flux: "±3.41T (ALTERNATING)",
+        impedance: "376.5 Ω (HIGH-SPEED)",
+        entropy: "4.9127 H(X)",
+        targetPos: new THREE.Vector3(1.8, 0.2, -1.2),
+        disassembleOffset: new THREE.Vector3(5.5, 0.5, -1.2), // AURA slides out laterally
+        color: 0xb026ff
+      },
+      {
+        id: "cryptid-brain",
+        code: "MOD-07-SCM",
+        title: "SCM: THE CRYPTID BRAIN (AURA)",
+        category: "Supervisor Control Module",
+        pricing: "HW: $750k // SW: $1.4M",
+        description: "Supervisor Control Module executing geometric PID and autonomous swarm coordination. Real-time deterministic bridge between telemetry and physical actuators.",
+        flux: "+3.38T (SWARM SYNC)",
+        impedance: "376.5 Ω (STABLE)",
+        entropy: "4.9127 H(X)",
+        targetPos: new THREE.Vector3(0, 0.3, 1.8),
+        disassembleOffset: new THREE.Vector3(-4.5, 3.5, 1.8), // AURA pulls out left
+        color: 0x00f0ff
+      }
+    ];
+
+    // Groups holding individual detachable modules
+    const moduleGroups = {};
+
+    function buildVehicleGeometry() {
+      // 1. CHASSIS BASE FRAME (Central Backbone)
+      const frameGeo = new THREE.BoxGeometry(3.6, 0.5, 9.4);
+      const frameMesh = new THREE.Mesh(frameGeo, materials.hull);
+      const frameWire = new THREE.Mesh(frameGeo, materials.hullWire);
+      frameMesh.add(frameWire);
+      vehicleGroup.add(frameMesh);
+
+      // 4 Aerodynamic Hex-Hub Wheels
+      const wheelPos = [
+        [-2.1, -0.4, 3.0], [2.1, -0.4, 3.0],
+        [-2.2, -0.4, -3.2], [2.2, -0.4, -3.2]
+      ];
+      wheelPos.forEach(pos => {
+        const wheelGeo = new THREE.CylinderGeometry(1.0, 1.0, 0.8, 16);
+        const wheelMesh = new THREE.Mesh(wheelGeo, materials.wheelRim);
+        wheelMesh.rotation.z = Math.PI / 2;
+        wheelMesh.position.set(...pos);
+        vehicleGroup.add(wheelMesh);
+      });
+
+      // 2. MOD-01: Σ-OS SOVEREIGN NODE CORE (Dashboard / Center Console)
+      const coreGroup = new THREE.Group();
+      coreGroup.position.copy(SUBSYSTEM_DATA[0].targetPos);
+      const coreCubeGeo = new THREE.BoxGeometry(0.8, 0.7, 0.8);
+      const coreCube = new THREE.Mesh(coreCubeGeo, materials.coreGlow);
+      coreGroup.add(coreCube);
+      // Small Holographic projection pyramid above it
+      const coneGeo = new THREE.ConeGeometry(0.6, 1.2, 4);
+      const cone = new THREE.Mesh(coneGeo, materials.canopy);
+      cone.rotation.x = Math.PI;
+      cone.position.y = 1.0;
+      coreGroup.add(cone);
+      vehicleGroup.add(coreGroup);
+      moduleGroups["core-node"] = coreGroup;
+
+      // 3. MOD-02: HOLLOW-HOOD COCKPIT & CANOPY
+      const canopyGroup = new THREE.Group();
+      canopyGroup.position.copy(SUBSYSTEM_DATA[1].targetPos);
+      const canopyGeo = new THREE.ConeGeometry(1.8, 4.4, 4);
+      const canopyMesh = new THREE.Mesh(canopyGeo, materials.canopy);
+      canopyMesh.rotation.x = -Math.PI / 2.3;
+      canopyMesh.scale.set(1.4, 1.0, 0.65);
+      canopyGroup.add(canopyMesh);
+      const canopyWire = new THREE.Mesh(canopyGeo, materials.hullWire);
+      canopyWire.rotation.x = -Math.PI / 2.3;
+      canopyWire.scale.set(1.41, 1.01, 0.66);
+      canopyGroup.add(canopyWire);
+      vehicleGroup.add(canopyGroup);
+      moduleGroups["canopy-roof"] = canopyGroup;
+
+      // 4. MOD-03: FRONT FASIA & AI DAZZLE MASK
+      const dazzleGroup = new THREE.Group();
+      dazzleGroup.position.copy(SUBSYSTEM_DATA[2].targetPos);
+      const noseGeo = new THREE.ConeGeometry(1.6, 2.0, 5);
+      const noseMesh = new THREE.Mesh(noseGeo, materials.hull);
+      noseMesh.rotation.x = Math.PI / 2;
+      noseMesh.scale.set(1.8, 1.0, 0.5);
+      dazzleGroup.add(noseMesh);
+      const dazzleRingGeo = new THREE.TorusGeometry(1.2, 0.08, 8, 32);
+      const dazzleRing = new THREE.Mesh(dazzleRingGeo, materials.dazzleEmitter);
+      dazzleRing.position.z = 0.8;
+      dazzleGroup.add(dazzleRing);
+      vehicleGroup.add(dazzleGroup);
+      moduleGroups["front-dazzle"] = dazzleGroup;
+
+      // 5. MOD-04: G.V. NODE-Σ-2026 TAIL MANIFOLD (Hexagram Vortex Turret)
+      const tailGroup = new THREE.Group();
+      tailGroup.position.copy(SUBSYSTEM_DATA[3].targetPos);
+      const ringGeo = new THREE.TorusGeometry(2.0, 0.15, 8, 32);
+      const ringMesh = new THREE.Mesh(ringGeo, materials.manifoldCoils);
+      tailGroup.add(ringMesh);
+
+      // Two interlocking triangles forming the 3-6-9 Hexagram
+      function createTriangleLine(radius, rot) {
+        const pts = [];
+        for (let i = 0; i <= 3; i++) {
+          const theta = (i * 2 * Math.PI / 3) + rot;
+          pts.push(new THREE.Vector3(radius * Math.cos(theta), radius * Math.sin(theta), 0));
+        }
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        return new THREE.Line(geo, materials.manifoldCoils);
+      }
+      tailGroup.add(createTriangleLine(1.6, 0));
+      tailGroup.add(createTriangleLine(1.6, Math.PI));
+      vehicleGroup.add(tailGroup);
+      moduleGroups["rear-manifold"] = tailGroup;
+
+      // 6. MOD-05: STRUCTURAL ARGYLE BATTERY RESERVOIR (Floor Plate)
+      const battGroup = new THREE.Group();
+      battGroup.position.copy(SUBSYSTEM_DATA[4].targetPos);
+      const battGeo = new THREE.BoxGeometry(3.2, 0.3, 7.8);
+      const battMesh = new THREE.Mesh(battGeo, materials.batteryMatrix);
+      battGroup.add(battMesh);
+      vehicleGroup.add(battGroup);
+      moduleGroups["battery-floor"] = battGroup;
+
+      // 7. MOD-06: ALPHA-BETA BIPOLAR INVERTER HUB (Lateral Side Pod)
+      const inverterGroup = new THREE.Group();
+      inverterGroup.position.copy(SUBSYSTEM_DATA[5].targetPos);
+      const invGeo = new THREE.BoxGeometry(0.8, 0.7, 2.6);
+      const invMesh = new THREE.Mesh(invGeo, new THREE.MeshBasicMaterial({ color: 0xb026ff, wireframe: true }));
+      inverterGroup.add(invMesh);
+      vehicleGroup.add(inverterGroup);
+      moduleGroups["inverter-hub"] = inverterGroup;
+
+      // 8. MOD-07: SCM CRYPTID BRAIN
+      const scmGroup = new THREE.Group();
+      scmGroup.position.copy(SUBSYSTEM_DATA[6].targetPos);
+      const scmGeo = new THREE.DodecahedronGeometry(0.7, 0);
+      const scmMesh = new THREE.Mesh(scmGeo, materials.coreGlow);
+      scmGroup.add(scmMesh);
+      vehicleGroup.add(scmGroup);
+      moduleGroups["cryptid-brain"] = scmGroup;
+    }
+
+    buildVehicleGeometry();
+
+    /* =========================================================================
+       4. AURA AUTONOMOUS SWARM PARTICLE SYSTEM
+       ========================================================================= */
+    const SWARM_COUNT = 48;
+    const swarmGroup = new THREE.Group();
+    scene.add(swarmGroup);
+
+    const swarmUnits = [];
+    const droneGeo = new THREE.OctahedronGeometry(0.2, 0);
+    const droneMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true });
+
+    for (let i = 0; i < SWARM_COUNT; i++) {
+      const drone = new THREE.Mesh(droneGeo, droneMat);
+      
+      // Add individual mini-light beam
+      const trailGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, -0.6, 0)
+      ]);
+      const trail = new THREE.Line(trailGeo, new THREE.LineBasicMaterial({ color: 0x00ffaa, transparent: true, opacity: 0.6 }));
+      drone.add(trail);
+
+      drone.userData = {
+        id: i,
+        orbitRadius: 10 + Math.random() * 8,
+        orbitSpeed: 0.6 + Math.random() * 0.8,
+        orbitAngle: Math.random() * Math.PI * 2,
+        orbitY: (Math.random() - 0.5) * 6,
+        targetPosition: new THREE.Vector3(),
+        isEngaged: false
+      };
+      
+      swarmGroup.add(drone);
+      swarmUnits.push(drone);
+    }
+
+    // Swarm Global State Machine
+    let currentSwarmState = "IDLE_ORBIT"; // "IDLE_ORBIT", "SWARMING_TARGET", "EXPLODING_ALL"
+    let activeIsolatedSubsystem = null;
+    let allExploded = false;
+
+    function setSwarmTarget(subsystem) {
+      currentSwarmState = "SWARMING_TARGET";
+      activeIsolatedSubsystem = subsystem;
+      document.getElementById("aura-status-pill").textContent = `AURA SWARM: ENGAGED [${subsystem.code}]`;
+      document.getElementById("aura-status-pill").parentElement.className = "px-2 py-0.5 rounded border border-cyan-400 bg-cyan-950/70 text-tactical-cyan flex items-center gap-1.5 glow-cyan";
+      document.getElementById("active-swarm-task").textContent = `PEELING & ISOLATING ${subsystem.code}`;
+      playSwarmSwarmSound();
+    }
+
+    function resetSwarmToOrbit() {
+      currentSwarmState = "IDLE_ORBIT";
+      activeIsolatedSubsystem = null;
+      allExploded = false;
+      document.getElementById("aura-status-pill").textContent = "AURA SWARM: STANDBY ORBIT";
+      document.getElementById("aura-status-pill").parentElement.className = "px-2 py-0.5 rounded border border-emerald-500/60 bg-emerald-950/40 text-tactical-emerald flex items-center gap-1.5";
+      document.getElementById("active-swarm-task").textContent = "PATROL FORMATION";
+      playTone(480, "16n");
+    }
+
+    /* =========================================================================
+       5. COMPONENT EXPLOSION / DISASSEMBLY LOGIC
+       ========================================================================= */
+    function updateComponentDisassembly(delta) {
+      SUBSYSTEM_DATA.forEach(sub => {
+        const group = moduleGroups[sub.id];
+        if (!group) return;
+
+        let dest = sub.targetPos.clone();
+
+        if (allExploded) {
+          // All parts pushed outward into full technical exploded view
+          dest.add(sub.disassembleOffset);
+        } else if (activeIsolatedSubsystem && activeIsolatedSubsystem.id === sub.id) {
+          // Only the single selected component pulled outward for inspection
+          dest.add(sub.disassembleOffset);
+        }
+
+        // Smooth Lerp Transition
+        group.position.lerp(dest, 0.08);
+
+        // Rotation spin on isolated component for detailed spatial inspection
+        if (activeIsolatedSubsystem && activeIsolatedSubsystem.id === sub.id) {
+          group.rotation.y += 0.015;
+        } else {
+          group.rotation.y = THREE.MathUtils.lerp(group.rotation.y, 0, 0.1);
+        }
+      });
+    }
+
+    // Swarm Motion Calculation
+    function updateSwarmMotion(timeSec) {
+      swarmUnits.forEach((drone, idx) => {
+        if (currentSwarmState === "IDLE_ORBIT") {
+          // Ambient Swarm Orbiting Vehicle Perimeter
+          drone.userData.orbitAngle += drone.userData.orbitSpeed * 0.02;
+          const r = drone.userData.orbitRadius;
+          const x = r * Math.cos(drone.userData.orbitAngle);
+          const z = r * Math.sin(drone.userData.orbitAngle);
+          const y = drone.userData.orbitY + Math.sin(timeSec * 2 + idx) * 0.8;
+          drone.position.lerp(new THREE.Vector3(x, y, z), 0.05);
+
+        } else if (currentSwarmState === "SWARMING_TARGET" && activeIsolatedSubsystem) {
+          // Swarm clusters around the isolated piece and the detachment seam
+          const targetGroup = moduleGroups[activeIsolatedSubsystem.id];
+          const worldPos = new THREE.Vector3();
+          targetGroup.getWorldPosition(worldPos);
+
+          const phi = (idx / SWARM_COUNT) * Math.PI * 2 + timeSec * 2;
+          const spreadR = 2.4 + Math.sin(timeSec * 4 + idx) * 0.5;
+          const x = worldPos.x + spreadR * Math.cos(phi);
+          const z = worldPos.z + spreadR * Math.sin(phi);
+          const y = worldPos.y + (Math.sin(timeSec * 3 + idx) * 1.2);
+
+          drone.position.lerp(new THREE.Vector3(x, y, z), 0.12);
+
+        } else if (currentSwarmState === "EXPLODING_ALL") {
+          // Swarm fragments to 7 component stations
+          const subIdx = idx % SUBSYSTEM_DATA.length;
+          const sub = SUBSYSTEM_DATA[subIdx];
+          const group = moduleGroups[sub.id];
+          const worldPos = new THREE.Vector3();
+          group.getWorldPosition(worldPos);
+
+          const offsetAngle = timeSec * 3 + idx;
+          const x = worldPos.x + 1.6 * Math.cos(offsetAngle);
+          const z = worldPos.z + 1.6 * Math.sin(offsetAngle);
+          const y = worldPos.y + Math.cos(offsetAngle) * 0.8;
+          drone.position.lerp(new THREE.Vector3(x, y, z), 0.08);
+        }
+
+        drone.rotation.x += 0.03;
+        drone.rotation.y += 0.05;
+      });
+    }
+
+    /* =========================================================================
+       6. INTERACTIVE SIDEBAR GENERATOR & CONTROLLER BINDINGS
+       ========================================================================= */
+    const listContainer = document.getElementById("subsystem-list");
+
+    SUBSYSTEM_DATA.forEach((sub, i) => {
+      const card = document.createElement("div");
+      card.className = `p-2.5 rounded border border-tactical-border/50 bg-tactical-panel hover:border-cyan-400 cursor-pointer transition-all flex flex-col gap-1 text-xs group ${i === 0 ? 'border-cyan-400 bg-cyan-950/40' : ''}`;
+      card.id = `card-${sub.id}`;
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] text-tactical-amber font-bold">${sub.code}</span>
+          <span class="text-[9px] px-1.5 py-0.2 rounded bg-black/60 text-tactical-cyan border border-tactical-border/40">${sub.category}</span>
+        </div>
+        <div class="font-bold text-slate-200 group-hover:text-tactical-cyan transition-colors flex items-center justify-between">
+          <span>${sub.title}</span>
+          <svg class="w-3.5 h-3.5 text-tactical-cyan opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </div>
+        <div class="text-[10px] text-slate-400 flex justify-between mt-0.5">
+          <span>${sub.pricing}</span>
+          <span class="text-tactical-emerald">${sub.flux}</span>
+        </div>
+      `;
+
+      card.addEventListener("click", () => {
+        selectSubsystem(sub);
+      });
+
+      listContainer.appendChild(card);
+    });
+
+    function selectSubsystem(sub) {
+      allExploded = false;
+      setSwarmTarget(sub);
+
+      // Highlight UI Card
+      document.querySelectorAll("#subsystem-list > div").forEach(el => {
+        el.classList.remove("border-cyan-400", "bg-cyan-950/40");
+      });
+      const activeCard = document.getElementById(`card-${sub.id}`);
+      if (activeCard) activeCard.classList.add("border-cyan-400", "bg-cyan-950/40");
+
+      // Update Floating Telemetry Panel
+      document.getElementById("spec-module-code").textContent = `${sub.code} // ${sub.category.toUpperCase()}`;
+      document.getElementById("spec-title").textContent = sub.title;
+      document.getElementById("spec-pricing").textContent = sub.pricing;
+      document.getElementById("spec-description").textContent = sub.description;
+      document.getElementById("spec-flux").textContent = sub.flux;
+      document.getElementById("spec-impedance").textContent = sub.impedance;
+      document.getElementById("spec-entropy").textContent = sub.entropy;
+      document.getElementById("spec-action-status").textContent = "ISOLATED BY AURA";
+
+      // Smoothly animate camera to frame the isolated subsystem
+      targetCameraPosition(sub.targetPos.clone().add(sub.disassembleOffset));
+      playTone(660, "16n");
+    }
+
+    // Explode All Button
+    document.getElementById("btn-explode-all").addEventListener("click", () => {
+      allExploded = true;
+      currentSwarmState = "EXPLODING_ALL";
+      document.getElementById("aura-status-pill").textContent = "AURA SWARM: MULTI-STATION DISASSEMBLY";
+      document.getElementById("active-swarm-task").textContent = "FULL CHASSIS DECONSTRUCTION";
+      document.getElementById("spec-title").textContent = "FULL SCHEMATIC EXPLODED VIEW";
+      document.getElementById("spec-description").textContent = "All 7 core modules detached and isolated along calibrated spatial vectors. The AURA swarm holds station at each subsystem junction.";
+      playTone(987, "16n");
+    });
+
+    // Reset Button
+    document.getElementById("btn-reassemble").addEventListener("click", () => {
+      resetSwarmToOrbit();
+      // Clear sidebar active highlights
+      document.querySelectorAll("#subsystem-list > div").forEach(el => el.classList.remove("border-cyan-400", "bg-cyan-950/40"));
+      // Restore default camera
+      camera.position.set(22, 14, 28);
+      camera.lookAt(0, 0, 0);
+    });
+
+    // Wireframe X-Ray Toggle
+    document.getElementById("btn-toggle-xray").addEventListener("click", (e) => {
+      isXRayMode = !isXRayMode;
+      materials.hull.wireframe = isXRayMode;
+      materials.canopy.wireframe = isXRayMode;
+      e.target.textContent = isXRayMode ? "X-RAY: ON" : "X-RAY WIREFRAME";
+      e.target.classList.toggle("bg-emerald-950/80", isXRayMode);
+      playTone(isXRayMode ? 880 : 440, "32n");
+    });
+
+    // Auto-Orbit Toggle
+    let autoRotate = true;
+    document.getElementById("btn-auto-rotate").addEventListener("click", (e) => {
+      autoRotate = !autoRotate;
+      e.target.textContent = autoRotate ? "ORBIT: ON" : "ORBIT: OFF";
+      e.target.classList.toggle("bg-purple-950/80", autoRotate);
+      playTone(autoRotate ? 740 : 370, "32n");
+    });
+
+    // Reset Camera Button
+    document.getElementById("btn-cam-reset").addEventListener("click", () => {
+      sphericalTheta = 0.8;
+      sphericalPhi = Math.PI / 3.4;
+      sphericalRadius = 38;
+      updateCameraPosition();
+      playTone(520, "32n");
+    });
+
+    /* =========================================================================
+       7. INTERACTIVE ORBIT CAMERA (Mouse & Touch Controls)
+       ========================================================================= */
+    let isDragging = false;
+    let prevMouseX = 0, prevMouseY = 0;
+    let sphericalTheta = 0.8, sphericalPhi = Math.PI / 3.4, sphericalRadius = 38;
+    let cameraLookTarget = new THREE.Vector3(0, 0, 0);
+
+    function updateCameraPosition() {
+      camera.position.x = cameraLookTarget.x + sphericalRadius * Math.sin(sphericalPhi) * Math.sin(sphericalTheta);
+      camera.position.y = cameraLookTarget.y + sphericalRadius * Math.cos(sphericalPhi);
+      camera.position.z = cameraLookTarget.z + sphericalRadius * Math.sin(sphericalPhi) * Math.cos(sphericalTheta);
+      camera.lookAt(cameraLookTarget);
+    }
+    updateCameraPosition();
+
+    function targetCameraPosition(focusPos) {
+      cameraLookTarget.copy(focusPos);
+      sphericalRadius = 24;
+      updateCameraPosition();
+    }
+
+    container.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      prevMouseX = e.clientX;
+      prevMouseY = e.clientY;
+    });
+    window.addEventListener("mouseup", () => isDragging = false);
+    window.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - prevMouseX;
+      const deltaY = e.clientY - prevMouseY;
+      sphericalTheta -= deltaX * 0.007;
+      sphericalPhi = Math.max(0.1, Math.min(Math.PI / 2.05, sphericalPhi - deltaY * 0.007));
+      prevMouseX = e.clientX;
+      prevMouseY = e.clientY;
+      updateCameraPosition();
+    });
+
+    // Touch Support for Mobile
+    let touchX = 0, touchY = 0;
+    container.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        touchX = e.touches[0].clientX;
+        touchY = e.touches[0].clientY;
+      }
+    });
+    window.addEventListener("touchend", () => isDragging = false);
+    window.addEventListener("touchmove", (e) => {
+      if (!isDragging || e.touches.length !== 1) return;
+      const deltaX = e.touches[0].clientX - touchX;
+      const deltaY = e.touches[0].clientY - touchY;
+      sphericalTheta -= deltaX * 0.009;
+      sphericalPhi = Math.max(0.1, Math.min(Math.PI / 2.05, sphericalPhi - deltaY * 0.009));
+      touchX = e.touches[0].clientX;
+      touchY = e.touches[0].clientY;
+      updateCameraPosition();
+    });
+
+    // Scroll Zoom
+    container.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      sphericalRadius = Math.max(12, Math.min(75, sphericalRadius + e.deltaY * 0.035));
+      updateCameraPosition();
+    });
+
+    /* =========================================================================
+       8. MAIN ANIMATION LOOP
+       ========================================================================= */
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      const elapsedTime = clock.getElapsedTime();
+
+      // Ambient orbit if enabled and not currently dragging
+      if (autoRotate && !isDragging && !activeIsolatedSubsystem && !allExploded) {
+        sphericalTheta += delta * 0.15;
+        updateCameraPosition();
+      }
+
+      // Update Component Disassembly positions
+      updateComponentDisassembly(delta);
+
+      // Update AURA Swarm particle trajectories
+      updateSwarmMotion(elapsedTime);
+
+      // Gyroscopic spin on G.V. Node rear manifold coils
+      const manifold = moduleGroups["rear-manifold"];
+      if (manifold) {
+        manifold.children[0].rotation.z += delta * 1.691;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    // Default selection on launch: Σ-OS Sovereign Core
+    window.onload = function() {
+      animate();
+      selectSubsystem(SUBSYSTEM_DATA[0]);
+    };
+  </script>
+</body>
+</html>

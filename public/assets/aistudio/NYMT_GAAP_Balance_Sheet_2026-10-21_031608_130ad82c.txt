@@ -1,0 +1,26 @@
+==================================================================
+NICHOLAS YOUNG MASTER TRUST // TITAN GAMES SECURITY L.L.C.
+FINANCIAL STATEMENT: GAAP BALANCE SHEET & AUDIT LEDGER
+==================================================================
+Doc ID    : NYMT-GAAP-2026-10-21_031608
+Date/Time : 2026-10-21T03:16:08.524355Z
+Trust EIN : 41-6820289 | Operating Arm: Titan Games Security L.L.C.
+CAGE Code : 258D9 | UEI: S3S5M9S1RGT9 | Law: MCL § 700.7913
+==================================================================
+1. ASSETS
+Cash & Cash Equivalents (Zero-Commingling)  : $   356,200.00
+Sovereign Capital Drawdown Reserve          : $ 1,000,000.00
+IP & Tech Assets (USPTO 64/014,873)         : $ 2,500,000.00
+Bare-Metal Hardware & Telemetry Deployments : $   150,000.00
+------------------------------------------------------------------
+TOTAL ASSETS                                : $ 4,006,200.00
+
+2. LIABILITIES & EQUITIES
+Total Liabilities                           : $             0.00
+Contributed Capital Reserve                 : $   356,200.00
+Sovereign IP Equity                         : $ 3,650,000.00
+------------------------------------------------------------------
+TOTAL LIABILITIES & TRUST EQUITY            : $ 4,006,200.00
+==================================================================
+EQUILIBRIUM: ASSETS = LIABILITIES + EQUITY [PERFECT TENDER VERIFIED]
+==================================================================

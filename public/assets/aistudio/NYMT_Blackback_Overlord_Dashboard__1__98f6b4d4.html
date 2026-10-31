@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYMT Blackback Overlord Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=Orbitron:wght@400;600;800;900&display=swap');
+
+        body {
+            background-color: #06080d;
+            color: #d1d5db;
+            font-family: 'Fira Code', monospace;
+            overflow-x: hidden;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Scanline CRT FX */
+        .scanline-overlay {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.35) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.03),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.03)
+            );
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+        }
+
+        .glow-border-cyan {
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+            border: 1px solid rgba(6, 182, 212, 0.4);
+        }
+
+        .glow-border-amber {
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+
+        .dna-block-red {
+            background: #ef4444;
+            box-shadow: 0 0 6px #ef4444;
+        }
+
+        .dna-block-cyan {
+            background: #06b6d4;
+            box-shadow: 0 0 6px #06b6d4;
+        }
+
+        .dna-block-dim {
+            background: #1f2937;
+            border: 1px solid #374151;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #06b6d4;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen p-4 md:p-6 select-none">
+
+    <!-- Scanline overlay -->
+    <div class="fixed inset-0 scanline-overlay z-50"></div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="max-w-7xl mx-auto space-y-6">
+
+        <!-- HEADER BAR -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between p-4 bg-slate-950/80 rounded-xl glow-border-cyan backdrop-blur">
+            <div class="flex items-center space-x-3 mb-3 md:mb-0">
+                <div class="p-2.5 bg-cyan-950/80 rounded-lg border border-cyan-500/50 text-cyan-400">
+                    <i data-lucide="shield-alert" class="w-7 h-7 animate-pulse"></i>
+                </div>
+                <div>
+                    <h1 class="font-orbitron text-xl md:text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-200 to-indigo-400">
+                        NYMT BLACKBACK OVERLORD
+                    </h1>
+                    <p class="text-xs text-slate-400 flex items-center gap-2">
+                        <span>MASTER ORCHESTRATOR & TWIN ENCLAVE MATRIX</span>
+                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- CONTROLS & SYSTEM STATS -->
+            <div class="flex flex-wrap items-center gap-3 text-xs">
+                <div class="bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-800 text-slate-300">
+                    <span class="text-slate-500">RESONANCE:</span> <span class="text-cyan-400 font-bold">3.69 Hz</span>
+                </div>
+                <div class="bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-800 text-slate-300">
+                    <span class="text-slate-500">IMPEDANCE Z₀:</span> <span class="text-emerald-400 font-bold">376.73 Ω</span>
+                </div>
+                <button onclick="triggerMutationEvent()" class="px-3 py-1.5 bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-300 border border-cyan-500/50 rounded-lg transition-all duration-200 flex items-center gap-1.5">
+                    <i data-lucide="dna" class="w-3.5 h-3.5"></i>
+                    <span>FORCE MUTATION</span>
+                </button>
+                <button onclick="toggleResonanceLock()" id="res-lock-btn" class="px-3 py-1.5 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/50 rounded-lg transition-all duration-200 flex items-center gap-1.5">
+                    <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                    <span id="res-lock-text">LOCK RESONANCE</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- TWIN ENCLAVES 2x2 GRID -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- TWIN_ALPHA -->
+            <div class="bg-slate-950/70 p-5 rounded-xl glow-border-cyan relative overflow-hidden backdrop-blur">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h2 class="font-orbitron text-lg font-bold text-slate-100 tracking-wide flex items-center gap-2">
+                            TWIN_ALPHA
+                            <span class="text-xs text-slate-500 font-mono font-normal">0x01</span>
+                        </h2>
+                        <p class="text-xs text-cyan-400 font-semibold uppercase tracking-wider">OPERATIONAL REALITY MIRROR</p>
+                    </div>
+                    <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse">
+                        ONLINE
+                    </span>
+                </div>
+
+                <!-- Load Bar -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400">PROCESSING LOAD</span>
+                        <span id="alpha-load-text" class="text-cyan-400 font-bold">28%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                        <div id="alpha-load-bar" class="h-full bg-cyan-500 rounded-full transition-all duration-500" style="width: 28%"></div>
+                    </div>
+                </div>
+
+                <!-- DNA Key Pattern -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <span class="text-slate-400">GENETIC DNA KEY</span>
+                        <span id="alpha-dna-tag" class="text-red-400 font-mono font-bold">AX-772-9</span>
+                    </div>
+                    <div id="alpha-dna-sequence" class="grid grid-cols-16 gap-1 h-5">
+                        <!-- DNA Blocks injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Footer Stats -->
+                <div class="pt-3 border-t border-slate-900 flex justify-between items-center text-[11px] text-slate-500">
+                    <div>RESONANCE: <span class="text-slate-300 font-bold">3.69HZ</span> | OS-IGNITION: <span class="text-slate-300 font-bold">L-V4</span></div>
+                    <div class="flex space-x-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-ping"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TWIN_BETA -->
+            <div class="bg-slate-950/70 p-5 rounded-xl glow-border-cyan relative overflow-hidden backdrop-blur">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h2 class="font-orbitron text-lg font-bold text-slate-100 tracking-wide flex items-center gap-2">
+                            TWIN_BETA
+                            <span class="text-xs text-slate-500 font-mono font-normal">0x02</span>
+                        </h2>
+                        <p class="text-xs text-blue-400 font-semibold uppercase tracking-wider">HOSTILE ACQUISITION SANDBOX</p>
+                    </div>
+                    <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse">
+                        ONLINE
+                    </span>
+                </div>
+
+                <!-- Load Bar -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400">PROCESSING LOAD</span>
+                        <span id="beta-load-text" class="text-blue-400 font-bold">25%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                        <div id="beta-load-bar" class="h-full bg-blue-500 rounded-full transition-all duration-500" style="width: 25%"></div>
+                    </div>
+                </div>
+
+                <!-- DNA Key Pattern -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <span class="text-slate-400">GENETIC DNA KEY</span>
+                        <span id="beta-dna-tag" class="text-red-400 font-mono font-bold">GT-109-0</span>
+                    </div>
+                    <div id="beta-dna-sequence" class="grid grid-cols-16 gap-1 h-5">
+                        <!-- DNA Blocks injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Footer Stats -->
+                <div class="pt-3 border-t border-slate-900 flex justify-between items-center text-[11px] text-slate-500">
+                    <div>RESONANCE: <span class="text-slate-300 font-bold">3.69HZ</span> | OS-IGNITION: <span class="text-slate-300 font-bold">L-V4</span></div>
+                    <div class="flex space-x-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TWIN_GAMMA -->
+            <div class="bg-slate-950/70 p-5 rounded-xl glow-border-cyan relative overflow-hidden backdrop-blur">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h2 class="font-orbitron text-lg font-bold text-slate-100 tracking-wide flex items-center gap-2">
+                            TWIN_GAMMA
+                            <span class="text-xs text-slate-500 font-mono font-normal">0x03</span>
+                        </h2>
+                        <p class="text-xs text-emerald-400 font-semibold uppercase tracking-wider">ADMINISTRATIVE FRICTION HONEYPOT</p>
+                    </div>
+                    <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse">
+                        ONLINE
+                    </span>
+                </div>
+
+                <!-- Load Bar -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400">PROCESSING LOAD</span>
+                        <span id="gamma-load-text" class="text-emerald-400 font-bold">12%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                        <div id="gamma-load-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 12%"></div>
+                    </div>
+                </div>
+
+                <!-- DNA Key Pattern -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <span class="text-slate-400">GENETIC DNA KEY</span>
+                        <span id="gamma-dna-tag" class="text-red-400 font-mono font-bold">GN-442-X</span>
+                    </div>
+                    <div id="gamma-dna-sequence" class="grid grid-cols-16 gap-1 h-5">
+                        <!-- DNA Blocks injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Footer Stats -->
+                <div class="pt-3 border-t border-slate-900 flex justify-between items-center text-[11px] text-slate-500">
+                    <div>RESONANCE: <span class="text-slate-300 font-bold">3.69HZ</span> | OS-IGNITION: <span class="text-slate-300 font-bold">L-V4</span></div>
+                    <div class="flex space-x-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TWIN_DELTA -->
+            <div class="bg-slate-950/70 p-5 rounded-xl glow-border-amber relative overflow-hidden backdrop-blur">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h2 class="font-orbitron text-lg font-bold text-slate-100 tracking-wide flex items-center gap-2">
+                            TWIN_DELTA
+                            <span class="text-xs text-slate-500 font-mono font-normal">0x04</span>
+                        </h2>
+                        <p class="text-xs text-amber-400 font-semibold uppercase tracking-wider">GENETIC EVOLUTION FORECASTER</p>
+                    </div>
+                    <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse">
+                        ONLINE
+                    </span>
+                </div>
+
+                <!-- Load Bar (Highlighting high load amber in screenshot) -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400">PROCESSING LOAD</span>
+                        <span id="delta-load-text" class="text-amber-400 font-bold">60%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                        <div id="delta-load-bar" class="h-full bg-amber-500 rounded-full transition-all duration-500" style="width: 60%"></div>
+                    </div>
+                </div>
+
+                <!-- DNA Key Pattern -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <span class="text-slate-400">GENETIC DNA KEY</span>
+                        <span id="delta-dna-tag" class="text-red-400 font-mono font-bold">OT-338-A</span>
+                    </div>
+                    <div id="delta-dna-sequence" class="grid grid-cols-16 gap-1 h-5">
+                        <!-- DNA Blocks injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Footer Stats -->
+                <div class="pt-3 border-t border-slate-900 flex justify-between items-center text-[11px] text-slate-500">
+                    <div>RESONANCE: <span class="text-slate-300 font-bold">3.69HZ</span> | OS-IGNITION: <span class="text-slate-300 font-bold">L-V4</span></div>
+                    <div class="flex space-x-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- LOWER SECTION: GENETIC_AI MUTATION STREAM & OSCILLOSCOPE -->
+        <div class="bg-slate-950/80 p-5 rounded-xl glow-border-cyan backdrop-blur space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-900 pb-3">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="activity" class="w-5 h-5 text-cyan-400"></i>
+                    <h3 class="font-orbitron text-sm font-bold tracking-widest text-slate-200">
+                        GENETIC_AI MUTATION STREAM & OSCILLOSCOPE
+                    </h3>
+                </div>
+                <div class="text-xs text-slate-400 mt-2 md:mt-0 flex items-center gap-3">
+                    <span>STATE HASH: <span id="current-state-hash" class="text-cyan-400 font-mono">0x3CF0_STATUTORY_TITLE_PERFECT</span></span>
+                    <span class="bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded text-[10px] border border-cyan-800">3.69Hz LOCKED</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Real-time Oscilloscope Canvas -->
+                <div class="lg:col-span-1 bg-slate-900/80 p-3 rounded-lg border border-slate-800 flex flex-col justify-between">
+                    <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
+                        <span>3.69 Hz WAVE & NULLING SUPPRESSION</span>
+                        <span class="text-emerald-400 font-mono">ΔP_null</span>
+                    </div>
+                    <canvas id="oscilloscope" class="w-full h-32 bg-slate-950 rounded border border-slate-900"></canvas>
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-2 font-mono">
+                        <span>INVARIANT: Ψ_shield = 1.691</span>
+                        <span>LATENCY: 0.087ms</span>
+                    </div>
+                </div>
+
+                <!-- Mutation Log Ticker Stream -->
+                <div class="lg:col-span-2 bg-slate-900/80 p-3 rounded-lg border border-slate-800 flex flex-col h-44">
+                    <div class="text-xs text-slate-400 mb-2 flex justify-between items-center">
+                        <span>LIVE STREAM LOGS</span>
+                        <span class="text-[10px] text-cyan-400 font-mono">MCL 450.4507 / UCC-12 ACTIVE</span>
+                    </div>
+                    <div id="log-stream" class="flex-1 overflow-y-auto space-y-1.5 font-mono text-xs pr-2 text-slate-300">
+                        <!-- Logs injected by JS -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT CORE LOGIC -->
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Enclave DNA sequence maps (16 blocks each: 1=red, 2=cyan, 0=dim)
+        const enclaveStates = {
+            alpha: {
+                load: 28,
+                key: 'AX-772-9',
+                blocks: [1,1,1,1,1,1,1,1,1,1,2,2,2,2,0,0]
+            },
+            beta: {
+                load: 25,
+                key: 'GT-109-0',
+                blocks: [1,1,1,1,1,1,1,1,1,0,0,2,2,2,0,0]
+            },
+            gamma: {
+                load: 12,
+                key: 'GN-442-X',
+                blocks: [2,2,1,1,1,1,1,1,1,1,1,1,1,1,0,0]
+            },
+            delta: {
+                load: 60,
+                key: 'OT-338-A',
+                blocks: [1,1,1,1,1,1,1,1,1,1,1,1,2,2,0,0]
+            }
+        };
+
+        // Render DNA Blocks
+        function renderDNABlocks(enclaveId, blocks) {
+            const container = document.getElementById(`${enclaveId}-dna-sequence`);
+            if (!container) return;
+            container.innerHTML = '';
+            blocks.forEach(type => {
+                const div = document.createElement('div');
+                div.className = 'h-full rounded-sm transition-all duration-300 ';
+                if (type === 1) div.className += 'dna-block-red';
+                else if (type === 2) div.className += 'dna-block-cyan';
+                else div.className += 'dna-block-dim';
+                container.appendChild(div);
+            });
+        }
+
+        // Initialize DNA Grid Displays
+        function initGrid() {
+            Object.keys(enclaveStates).forEach(id => {
+                renderDNABlocks(id, enclaveStates[id].blocks);
+            });
+        }
+
+        // Oscilloscope Canvas Rendering
+        const canvas = document.getElementById('oscilloscope');
+        const ctx = canvas.getContext('2d');
+        let phase = 0;
+
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function drawWave() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Grid lines
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+
+            // 3.69 Hz Carrier Wave (Cyan)
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let x = 0; x < canvas.width; x++) {
+                const y = canvas.height / 2 + Math.sin((x * 0.04) + phase) * (canvas.height * 0.3) * Math.sin(phase * 0.5);
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Anti-Phase Null Wave (Red/Amber Inverse)
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            for (let x = 0; x < canvas.width; x++) {
+                const y = canvas.height / 2 - Math.sin((x * 0.04) + phase) * (canvas.height * 0.28) * Math.sin(phase * 0.5);
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            phase += 0.06;
+            requestAnimationFrame(drawWave);
+        }
+
+        // Logger Utility
+        const logStream = document.getElementById('log-stream');
+        function addLog(msg, type = 'info') {
+            const time = new Date().toISOString().substring(11, 19);
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-2 font-mono';
+            
+            let badge = '<span class="text-cyan-500">[INFO]</span>';
+            if (type === 'mutation') badge = '<span class="text-amber-400 font-bold">[MUTATION]</span>';
+            if (type === 'lock') badge = '<span class="text-emerald-400 font-bold">[ENCLAVE]</span>';
+            if (type === 'sec') badge = '<span class="text-red-400 font-bold">[SECURITY]</span>';
+
+            div.innerHTML = `<span class="text-slate-600">${time}</span> ${badge} <span class="text-slate-300">${msg}</span>`;
+            logStream.appendChild(div);
+            logStream.scrollTop = logStream.scrollHeight;
+        }
+
+        // Interactive Event Triggers
+        function triggerMutationEvent() {
+            // Randomize DNA key sequence blocks slightly
+            Object.keys(enclaveStates).forEach(id => {
+                const blocks = enclaveStates[id].blocks;
+                const index = Math.floor(Math.random() * (blocks.length - 2));
+                blocks[index] = Math.floor(Math.random() * 3);
+                renderDNABlocks(id, blocks);
+
+                // Fluctuate load
+                const newLoad = Math.min(95, Math.max(10, enclaveStates[id].load + Math.floor(Math.random() * 15 - 7)));
+                enclaveStates[id].load = newLoad;
+
+                const textEl = document.getElementById(`${id}-load-text`);
+                const barEl = document.getElementById(`${id}-load-bar`);
+                if (textEl && barEl) {
+                    textEl.innerText = `${newLoad}%`;
+                    barEl.style.width = `${newLoad}%`;
+                }
+            });
+
+            // Random state hash
+            const hashes = [
+                '0x3CF0_STATUTORY_TITLE_PERFECT',
+                '0x7A11_UCC12_LEDGER_PERFECTED',
+                '0x889B_HARMONIC_RESONANCE_SEAL',
+                '0x10A4_AURA_ARA_TWIN_SYNCHRONIZED'
+            ];
+            const nextHash = hashes[Math.floor(Math.random() * hashes.length)];
+            document.getElementById('current-state-hash').innerText = nextHash;
+
+            addLog(`Genetic mutation executed across Quad-Core Enclaves. Hash: ${nextHash}`, 'mutation');
+        }
+
+        let isLocked = false;
+        function toggleResonanceLock() {
+            isLocked = !isLocked;
+            const btn = document.getElementById('res-lock-btn');
+            const txt = document.getElementById('res-lock-text');
+            if (isLocked) {
+                btn.className = 'px-3 py-1.5 bg-red-600/30 hover:bg-red-600/50 text-red-300 border border-red-500/50 rounded-lg transition-all duration-200 flex items-center gap-1.5';
+                txt.innerText = 'UNLOCK RESONANCE';
+                addLog('Resonance lock engaged. Free-space Z0 = 376.73 Ω frozen.', 'sec');
+            } else {
+                btn.className = 'px-3 py-1.5 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/50 rounded-lg transition-all duration-200 flex items-center gap-1.5';
+                txt.innerText = 'LOCK RESONANCE';
+                addLog('Resonance unlocked. Dynamic impedance tracking active.', 'info');
+            }
+        }
+
+        // Automatic background heartbeat logs
+        setInterval(() => {
+            if (!isLocked) {
+                const enclaves = ['TWIN_ALPHA', 'TWIN_BETA', 'TWIN_GAMMA', 'TWIN_DELTA'];
+                const target = enclaves[Math.floor(Math.random() * enclaves.length)];
+                addLog(`Automatic 3.69Hz harmonic heartbeat verified on ${target}. Latency < 0.087ms.`, 'lock');
+            }
+        }, 4500);
+
+        // Initial setup execution
+        initGrid();
+        drawWave();
+        addLog('NYMT Blackback Overlord Core Initialized. Quad-Core Enclave online.', 'info');
+        addLog('Impedance baseline locked to Z₀ = 376.73 Ω.', 'info');
+    </script>
+</body>
+</html>
